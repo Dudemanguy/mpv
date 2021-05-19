@@ -746,16 +746,12 @@ endif
 
 # video output dependencies
 
-libplacebo_project = subproject(
-    'libplacebo',
-    required: get_option('libplacebo'),
-    version: '>=2.72.0'
-)
-if libplacebo_project.found()
-    libplacebo = libplacebo_project.get_variable('libplacebo')
-else
-    libplacebo = dependency('libplacebo', version: '>= 2.72.0', required: get_option('libplacebo'))
-endif
+#libplacebo_project = subproject(
+#    'libplacebo',
+#    required: get_option('libplacebo'),
+#    version: '>=2.72.0',
+#)
+libplacebo =dependency('libplacebo')
 if libplacebo.found()
     dependencies += libplacebo
     sources += ['video/out/placebo/ra_pl.c',
