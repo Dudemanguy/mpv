@@ -970,6 +970,7 @@ void mpv_wakeup(mpv_handle *ctx)
 // map client API types to internal types
 static const struct m_option type_conv[] = {
     [MPV_FORMAT_STRING]     = { .type = CONF_TYPE_STRING },
+    [MPV_FORMAT_BOOL]       = { .type = CONF_TYPE_BOOL },
     [MPV_FORMAT_FLAG]       = { .type = CONF_TYPE_FLAG },
     [MPV_FORMAT_INT64]      = { .type = CONF_TYPE_INT64 },
     [MPV_FORMAT_DOUBLE]     = { .type = CONF_TYPE_DOUBLE },
@@ -1000,6 +1001,10 @@ static bool conv_node_to_format(void *dst, mpv_format dst_fmt, mpv_node *src)
     if (dst_fmt == src->format) {
         const struct m_option *type = get_mp_type(dst_fmt);
         memcpy(dst, &src->u, type->type->size);
+        return true;
+    }
+    if (dst_fmt == MPV_FORMAT_FLAG && src->format == MPV_FORMAT_BOOL) {
+        *(int *)dst = src->u.bool_;
         return true;
     }
     if (dst_fmt == MPV_FORMAT_DOUBLE && src->format == MPV_FORMAT_INT64) {
@@ -1418,6 +1423,7 @@ static void getproperty_fn(void *arg)
         break;
     }
     case MPV_FORMAT_NODE:
+    case MPV_FORMAT_BOOL:
     case MPV_FORMAT_FLAG:
     case MPV_FORMAT_INT64:
     case MPV_FORMAT_DOUBLE: {
@@ -2030,6 +2036,9 @@ int mpv_event_to_node(mpv_node *dst, mpv_event *event)
             break;
         case MPV_FORMAT_DOUBLE:
             node_map_add_double(dst, "data", *(double *)prop->data);
+            break;
+        case MPV_FORMAT_BOOL:
+            node_map_add_flag(dst, "data", *(bool *)prop->data);
             break;
         case MPV_FORMAT_FLAG:
             node_map_add_flag(dst, "data", *(int *)prop->data);

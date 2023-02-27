@@ -23,6 +23,7 @@
 #ifndef MPV_CLIENT_API_H_
 #define MPV_CLIENT_API_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -240,7 +241,7 @@ extern "C" {
  * relational operators (<, >, <=, >=).
  */
 #define MPV_MAKE_VERSION(major, minor) (((major) << 16) | (minor) | 0UL)
-#define MPV_CLIENT_API_VERSION MPV_MAKE_VERSION(2, 1)
+#define MPV_CLIENT_API_VERSION MPV_MAKE_VERSION(2, 2)
 
 /**
  * The API user is allowed to "#define MPV_ENABLE_DEPRECATED 0" before
@@ -667,6 +668,7 @@ typedef enum mpv_format {
      * Only valid when doing read access. The rest works like MPV_FORMAT_STRING.
      */
     MPV_FORMAT_OSD_STRING       = 2,
+#if MPV_ENABLE_DEPRECATED
     /**
      * The basic type is int. The only allowed values are 0 ("no")
      * and 1 ("yes").
@@ -682,8 +684,11 @@ typedef enum mpv_format {
      *
      *     int flag = 1;
      *     mpv_set_property(ctx, "property", MPV_FORMAT_FLAG, &flag);
+     *
+     * @deprecated Use MPV_FORMAT_BOOL instead as a replacement.
      */
     MPV_FORMAT_FLAG             = 3,
+#endif
     /**
      * The basic type is int64_t.
      */
@@ -737,7 +742,11 @@ typedef enum mpv_format {
      * A raw, untyped byte array. Only used only with mpv_node, and only in
      * some very specific situations. (Some commands use it.)
      */
-    MPV_FORMAT_BYTE_ARRAY       = 9
+    MPV_FORMAT_BYTE_ARRAY       = 9,
+    /**
+     * The basic type is bool.
+     */
+    MPV_FORMAT_BOOL             = 10,
 } mpv_format;
 
 /**
@@ -751,6 +760,7 @@ typedef enum mpv_format {
 typedef struct mpv_node {
     union {
         char *string;   /** valid if format==MPV_FORMAT_STRING */
+        bool bool_;     /** valid if format==MPV_FORMAT_BOOL   */
         int flag;       /** valid if format==MPV_FORMAT_FLAG   */
         int64_t int64;  /** valid if format==MPV_FORMAT_INT64  */
         double double_; /** valid if format==MPV_FORMAT_DOUBLE */
@@ -770,6 +780,7 @@ typedef struct mpv_node {
      * defined to be allowed in mpv_node:
      *
      *  MPV_FORMAT_STRING       (u.string)
+     *  MPV_FORMAT_BOOL         (u.bool_)
      *  MPV_FORMAT_FLAG         (u.flag)
      *  MPV_FORMAT_INT64        (u.int64)
      *  MPV_FORMAT_DOUBLE       (u.double_)

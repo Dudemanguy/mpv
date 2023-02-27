@@ -190,17 +190,18 @@ static void add_bool(const m_option_t *opt, void *val, double add, bool wrap)
 
 static int bool_set(const m_option_t *opt, void *dst, struct mpv_node *src)
 {
-    if (src->format != MPV_FORMAT_FLAG)
+    // MPV_FORMAT_FLAG is for libmpv compatibility
+    if (src->format != MPV_FORMAT_BOOL && src->format != MPV_FORMAT_FLAG)
         return M_OPT_UNKNOWN;
-    VAL(dst) = !!src->u.flag;
+    VAL(dst) = src->u.bool_;
     return 1;
 }
 
 static int bool_get(const m_option_t *opt, void *ta_parent,
                     struct mpv_node *dst, void *src)
 {
-    dst->format = MPV_FORMAT_FLAG;
-    dst->u.flag = !!VAL(src);
+    dst->format = MPV_FORMAT_BOOL;
+    dst->u.bool_ = VAL(src);
     return 1;
 }
 

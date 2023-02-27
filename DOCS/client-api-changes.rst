@@ -34,6 +34,8 @@ API changes
 
  --- mpv 0.36.0 ---
  2.1    - add mpv_del_property()
+ 2.2    - add MPV_FORMAT_BOOL
+        - deprecate MPV_FORMAT_FLAG in favor of MPV_FORMAT_BOOL
  --- mpv 0.35.0 ---
  2.0    - remove headers/functions of the obsolete opengl_cb API
         - remove mpv_opengl_init_params.extra_exts field
