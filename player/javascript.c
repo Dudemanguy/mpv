@@ -662,7 +662,7 @@ static void script_set_property(js_State *J)
 static void script_set_property_bool(js_State *J)
 {
     int v = js_toboolean(J, 2);
-    int e = mpv_set_property(jclient(J), js_tostring(J, 1), MPV_FORMAT_FLAG, &v);
+    int e = mpv_set_property(jclient(J), js_tostring(J, 1), MPV_FORMAT_BOOL, &v);
     push_status(J, e);
 }
 
@@ -708,9 +708,9 @@ static void script_del_property(js_State *J)
 // args: name [,def]
 static void script_get_property_bool(js_State *J)
 {
-    int result;
+    bool result;
     mpv_handle *h = jclient(J);
-    int e = mpv_get_property(h, js_tostring(J, 1), MPV_FORMAT_FLAG, &result);
+    int e = mpv_get_property(h, js_tostring(J, 1), MPV_FORMAT_BOOL, &result);
     if (!pushed_error(J, e, 2))
         js_pushboolean(J, result);
 }
@@ -752,7 +752,7 @@ static void script_get_property_osd(js_State *J, void *af)
 static void script__observe_property(js_State *J)
 {
     const char *fmts[] = {"none", "native", "bool", "string", "number", NULL};
-    const mpv_format mf[] = {MPV_FORMAT_NONE, MPV_FORMAT_NODE, MPV_FORMAT_FLAG,
+    const mpv_format mf[] = {MPV_FORMAT_NONE, MPV_FORMAT_NODE, MPV_FORMAT_BOOL,
                              MPV_FORMAT_STRING, MPV_FORMAT_DOUBLE};
 
     mpv_format f = mf[checkopt(J, 3, "none", fmts, "observe type")];
@@ -1025,7 +1025,9 @@ static void pushnode(js_State *J, mpv_node *node)
     case MPV_FORMAT_STRING: js_pushstring(J, node->u.string); break;
     case MPV_FORMAT_INT64:  js_pushnumber(J, node->u.int64); break;
     case MPV_FORMAT_DOUBLE: js_pushnumber(J, node->u.double_); break;
-    case MPV_FORMAT_FLAG:   js_pushboolean(J, node->u.flag); break;
+    // MPV_FORMAT_FLAG is still needed for observing properties.
+    case MPV_FORMAT_BOOL:
+    case MPV_FORMAT_FLAG:   js_pushboolean(J, node->u.bool_); break;
     case MPV_FORMAT_BYTE_ARRAY:
         js_pushlstring(J, node->u.ba->data, node->u.ba->size);
         break;
@@ -1097,8 +1099,8 @@ static void makenode(void *ta_ctx, mpv_node *dst, js_State *J, int idx)
         dst->format = MPV_FORMAT_NONE;
 
     } else if (js_isboolean(J, idx)) {
-        dst->format = MPV_FORMAT_FLAG;
-        dst->u.flag = js_toboolean(J, idx);
+        dst->format = MPV_FORMAT_BOOL;
+        dst->u.bool_ = js_toboolean(J, idx);
 
     } else if (js_isnumber(J, idx)) {
         double val = js_tonumber(J, idx);

@@ -744,8 +744,8 @@ static int choice_set(const m_option_t *opt, void *dst, struct mpv_node *src)
         src_str = buf;
     } else if (src->format == MPV_FORMAT_STRING) {
         src_str = src->u.string;
-    } else if (src->format == MPV_FORMAT_FLAG) {
-        src_str = src->u.flag ? "yes" : "no";
+    } else if (src->format == MPV_FORMAT_BOOL) {
+        src_str = src->u.bool_ ? "yes" : "no";
     }
     if (!src_str)
         return M_OPT_UNKNOWN;
@@ -795,8 +795,8 @@ static int choice_get(const m_option_t *opt, void *ta_parent,
             b = 0;
         }
         if (b >= 0) {
-            dst->format = MPV_FORMAT_FLAG;
-            dst->u.flag = b;
+            dst->format = MPV_FORMAT_BOOL;
+            dst->u.bool_ = b;
         } else {
             dst->format = MPV_FORMAT_STRING;
             dst->u.string = talloc_strdup(ta_parent, alt->name);
@@ -3581,9 +3581,9 @@ static int set_obj_settings_list(const m_option_t *opt, void *dst,
                     goto error;
                 entry->label = talloc_strdup(NULL, val->u.string);
             } else if (strcmp(key, "enabled") == 0) {
-                if (val->format != MPV_FORMAT_FLAG)
+                if (val->format != MPV_FORMAT_BOOL)
                     goto error;
-                entry->enabled = val->u.flag;
+                entry->enabled = val->u.bool_;
             } else if (strcmp(key, "params") == 0) {
                 if (val->format != MPV_FORMAT_NODE_MAP)
                     goto error;
@@ -3650,8 +3650,8 @@ static int get_obj_settings_list(const m_option_t *opt, void *ta_parent,
         if (entry->label && entry->label[0])
             add_map_string(nentry, "label", entry->label);
         struct mpv_node *enabled = add_map_entry(nentry, "enabled");
-        enabled->format = MPV_FORMAT_FLAG;
-        enabled->u.flag = entry->enabled;
+        enabled->format = MPV_FORMAT_BOOL;
+        enabled->u.bool_ = entry->enabled;
         struct mpv_node *params = add_map_entry(nentry, "params");
         params->format = MPV_FORMAT_NODE_MAP;
         params->u.list = talloc_zero(ta_parent, struct mpv_node_list);
@@ -3787,6 +3787,7 @@ static void dup_node(void *ta_parent, struct mpv_node *node)
         break;
     }
     case MPV_FORMAT_NONE:
+    case MPV_FORMAT_BOOL:
     case MPV_FORMAT_FLAG:
     case MPV_FORMAT_INT64:
     case MPV_FORMAT_DOUBLE:

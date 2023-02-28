@@ -201,12 +201,12 @@ int json_parse(void *ta_parent, struct mpv_node *dst, char **src, int max_depth)
         return 0;
     } else if (c == 't' && strncmp(*src, "true", 4) == 0) {
         *src += 4;
-        dst->format = MPV_FORMAT_FLAG;
+        dst->format = MPV_FORMAT_BOOL;
         dst->u.flag = 1;
         return 0;
     } else if (c == 'f' && strncmp(*src, "false", 5) == 0) {
         *src += 5;
-        dst->format = MPV_FORMAT_FLAG;
+        dst->format = MPV_FORMAT_BOOL;
         dst->u.flag = 0;
         return 0;
     } else if (c == '"') {
@@ -293,8 +293,8 @@ static int json_append(bstr *b, const struct mpv_node *src, int indent)
     case MPV_FORMAT_NONE:
         APPEND(b, "null");
         return 0;
-    case MPV_FORMAT_FLAG:
-        APPEND(b, src->u.flag ? "true" : "false");
+    case MPV_FORMAT_BOOL:
+        APPEND(b, src->u.bool_ ? "true" : "false");
         return 0;
     case MPV_FORMAT_INT64:
         bstr_xappend_asprintf(NULL, b, "%"PRId64, src->u.int64);

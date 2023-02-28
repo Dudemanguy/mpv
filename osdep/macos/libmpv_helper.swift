@@ -199,8 +199,8 @@ class LibmpvHelper {
 
     func getBoolProperty(_ name: String) -> Bool {
         if mpvHandle == nil { return false }
-        var value = Int32()
-        mpv_get_property(mpvHandle, name, MPV_FORMAT_FLAG, &value)
+        var value = Bool()
+        mpv_get_property(mpvHandle, name, MPV_FORMAT_BOOL, &value)
         return value > 0
     }
 
@@ -243,7 +243,7 @@ class LibmpvHelper {
         return String(cString: cstr[0])
     }
 
-    // MPV_FORMAT_FLAG
+    // MPV_FORMAT_BOOL
     class func mpvFlagToBool(_ obj: UnsafeMutableRawPointer) -> Bool? {
         return UnsafePointer<Bool>(OpaquePointer(obj))?.pointee
     }

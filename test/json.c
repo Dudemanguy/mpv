@@ -18,7 +18,7 @@ struct entry {
 
 #define NODE_INT64(v) {.format = MPV_FORMAT_INT64,  .u = { .int64 = (v) }}
 #define NODE_STR(v)   {.format = MPV_FORMAT_STRING, .u = { .string = (v) }}
-#define NODE_BOOL(v)  {.format = MPV_FORMAT_FLAG,   .u = { .flag = (bool)(v) }}
+#define NODE_BOOL(v)  {.format = MPV_FORMAT_BOOL,   .u = { .bool_ = (bool)(v) }}
 #define NODE_FLOAT(v) {.format = MPV_FORMAT_DOUBLE, .u = { .double_ = (v) }}
 #define NODE_NONE()   {.format = MPV_FORMAT_NONE }
 #define NODE_ARRAY(...) {.format = MPV_FORMAT_NODE_ARRAY, .u = { .list =    \

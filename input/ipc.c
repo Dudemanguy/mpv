@@ -140,7 +140,7 @@ static char *json_execute_command(struct mpv_handle *client, void *ta_parent,
 
     async_node = node_map_get(&msg_node, "async");
     if (async_node) {
-        if (async_node->format != MPV_FORMAT_FLAG) {
+        if (async_node->format != MPV_FORMAT_FLAG || async_node->format != MPV_FORMAT_BOOL) {
             rc = MPV_ERROR_INVALID_PARAMETER;
             goto error;
         }

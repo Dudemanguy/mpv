@@ -185,8 +185,8 @@ class RemoteCommandCenter: NSObject {
         }
 
         switch String(cString: property.name) {
-        case "pause" where property.format == MPV_FORMAT_FLAG:
-            isPaused = LibmpvHelper.mpvFlagToBool(property.data) ?? false
+        case "pause" where property.format == MPV_FORMAT_BOOL:
+            isPaused = LibmpvHelper.mpvBool(property.data) ?? false
         default:
             break
         }

@@ -325,8 +325,8 @@
     } else if ([name isEqualToString:@"duration"] && format == MPV_FORMAT_DOUBLE) {
         self.duration = *(double *)property->data;
         [self updateTouchBarTimeItems];
-    } else if ([name isEqualToString:@"pause"] && format == MPV_FORMAT_FLAG) {
-        self.pause = *(int *)property->data;
+    } else if ([name isEqualToString:@"pause"] && format == MPV_FORMAT_BOOL) {
+        self.pause = *(bool *)property->data;
         [self updatePlayButton];
     }
 }

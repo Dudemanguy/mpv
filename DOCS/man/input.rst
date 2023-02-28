@@ -552,7 +552,7 @@ Remember to quote string arguments in input.conf (see `Flat command syntax`_).
         searched in the directories in the ``PATH`` environment variable. On
         Unix, this is equivalent to ``posix_spawnp`` and ``execvp`` behavior.
 
-    ``playback_only`` (``MPV_FORMAT_FLAG``)
+    ``playback_only`` (``MPV_FORMAT_BOOL``)
         Boolean indicating whether the process should be killed when playback
         of the current playlist entry terminates (optional, default: true). If
         enabled, stopping playback will automatically kill the process, and you
@@ -563,14 +563,14 @@ Remember to quote string arguments in input.conf (see `Flat command syntax`_).
         be captured (optional, default: 64MB). If the number of bytes exceeds
         this, capturing is stopped. The limit is per captured stream.
 
-    ``capture_stdout`` (``MPV_FORMAT_FLAG``)
+    ``capture_stdout`` (``MPV_FORMAT_BOOL``)
         Capture all data the process outputs to stdout and return it once the
         process ends (optional, default: no).
 
-    ``capture_stderr`` (``MPV_FORMAT_FLAG``)
+    ``capture_stderr`` (``MPV_FORMAT_BOOL``)
         Same as ``capture_stdout``, but for stderr.
 
-    ``detach`` (``MPV_FORMAT_FLAG``)
+    ``detach`` (``MPV_FORMAT_BOOL``)
         Whether to run the process in detached mode (optional, default: no). In
         this mode, the process is run in a new process session, and the command
         does not wait for the process to terminate. If neither
@@ -595,7 +595,7 @@ Remember to quote string arguments in input.conf (see `Flat command syntax`_).
         closes the pipe before all data is written, the remaining data is
         silently discarded. Probably does not work on win32.
 
-    ``passthrough_stdin`` (``MPV_FORMAT_FLAG``)
+    ``passthrough_stdin`` (``MPV_FORMAT_BOOL``)
         If enabled, wire the new process' stdin to mpv's stdin (default: no).
         Before mpv 0.33.0, this argument did not exist, but the behavior was as
         if this was set to true.
@@ -628,7 +628,7 @@ Remember to quote string arguments in input.conf (see `Flat command syntax`_).
         On Windows, ``killed`` is only returned when the process has been
         killed by mpv as a result of ``playback_only`` being set to true.
 
-    ``killed_by_us`` (``MPV_FORMAT_FLAG``)
+    ``killed_by_us`` (``MPV_FORMAT_BOOL``)
         Whether the process has been killed by mpv, for example as a result of
         ``playback_only`` being set to true, aborting the command (e.g. by
         ``mp.abort_async_command()``), or if the player is about to exit.
@@ -853,7 +853,7 @@ Remember to quote string arguments in input.conf (see `Flat command syntax`_).
 ``video-add <url> [<flags> [<title> [<lang> [<albumart>]]]]``
     Load the given video file. See ``sub-add`` command for common options.
 
-    ``albumart`` (``MPV_FORMAT_FLAG``)
+    ``albumart`` (``MPV_FORMAT_BOOL``)
         If enabled, mpv will load the given video as album art.
 
 ``video-remove [<id>]``
@@ -2053,7 +2053,7 @@ Property list
             MPV_FORMAT_NODE_MAP (for each edition)
                 "id"                MPV_FORMAT_INT64
                 "title"             MPV_FORMAT_STRING
-                "default"           MPV_FORMAT_FLAG
+                "default"           MPV_FORMAT_BOOL
 
 ``metadata``
     Metadata key/value pairs.
@@ -2213,8 +2213,8 @@ Property list
                 MPV_FORMAT_NODE_MAP
                     "start"             MPV_FORMAT_DOUBLE
                     "end"               MPV_FORMAT_DOUBLE
-            "bof-cached"        MPV_FORMAT_FLAG
-            "eof-cached"        MPV_FORMAT_FLAG
+            "bof-cached"        MPV_FORMAT_BOOL
+            "eof-cached"        MPV_FORMAT_BOOL
             "fw-bytes"          MPV_FORMAT_INT64
             "file-cache-bytes"  MPV_FORMAT_INT64
             "cache-end"         MPV_FORMAT_DOUBLE
@@ -2809,8 +2809,8 @@ Property list
         MPV_FORMAT_NODE_ARRAY
             MPV_FORMAT_NODE_MAP (for each playlist entry)
                 "filename"  MPV_FORMAT_STRING
-                "current"   MPV_FORMAT_FLAG (might be missing; since mpv 0.7.0)
-                "playing"   MPV_FORMAT_FLAG (same)
+                "current"   MPV_FORMAT_BOOL (might be missing; since mpv 0.7.0)
+                "playing"   MPV_FORMAT_BOOL (same)
                 "title"     MPV_FORMAT_STRING (optional)
                 "id"        MPV_FORMAT_INT64
 
@@ -2946,13 +2946,13 @@ Property list
                 "src-id"            MPV_FORMAT_INT64
                 "title"             MPV_FORMAT_STRING
                 "lang"              MPV_FORMAT_STRING
-                "image"             MPV_FORMAT_FLAG
-                "albumart"          MPV_FORMAT_FLAG
-                "default"           MPV_FORMAT_FLAG
-                "forced"            MPV_FORMAT_FLAG
-                "selected"          MPV_FORMAT_FLAG
+                "image"             MPV_FORMAT_BOOL
+                "albumart"          MPV_FORMAT_BOOL
+                "default"           MPV_FORMAT_BOOL
+                "forced"            MPV_FORMAT_BOOL
+                "selected"          MPV_FORMAT_BOOL
                 "main-selection"    MPV_FORMAT_INT64
-                "external"          MPV_FORMAT_FLAG
+                "external"          MPV_FORMAT_BOOL
                 "external-filename" MPV_FORMAT_STRING
                 "codec"             MPV_FORMAT_STRING
                 "ff-index"          MPV_FORMAT_INT64
@@ -3025,7 +3025,7 @@ Property list
             MPV_FORMAT_NODE_MAP (for each filter entry)
                 "name"      MPV_FORMAT_STRING
                 "label"     MPV_FORMAT_STRING [optional]
-                "enabled"   MPV_FORMAT_FLAG [optional]
+                "enabled"   MPV_FORMAT_BOOL [optional]
                 "params"    MPV_FORMAT_NODE_MAP [optional]
                     "key"   MPV_FORMAT_STRING
                     "value" MPV_FORMAT_STRING
