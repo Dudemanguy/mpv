@@ -53,6 +53,7 @@ if [ "$1" = "waf" ]; then
       --enable-spirv-cross     \
       --enable-uchardet        \
       --enable-vapoursynth     \
+      --disable-zimg           \
       --enable-lua             \
       --enable-vulkan
     ./waf build
