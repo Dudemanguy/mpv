@@ -988,7 +988,10 @@ wayland = {
              dependency('wayland-cursor', version: '>= 1.20.0', required: get_option('wayland')),
              dependency('wayland-protocols', version: '>= 1.25', required: get_option('wayland')),
              dependency('xkbcommon', version: '>= 0.3.0', required: get_option('wayland'))],
-    'header': cc.has_header('linux/input-event-codes.h', required: get_option('wayland')),
+    'header': cc.has_header('linux/input-event-codes.h', required: get_option('wayland'),
+                            # Some BSDs need evdev-proto to find the header.
+                            # Fallback to wayland-client otherwise.
+                            dependencies: dependency('evdev-proto', required: false)),
     'scanner': find_program('wayland-scanner', required: get_option('wayland')),
 }
 wayland_deps = true
