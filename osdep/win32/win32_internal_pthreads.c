@@ -13,9 +13,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <pthread.h>
-#include <semaphore.h>
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>

@@ -37,7 +37,7 @@ if features['win32-internal-pthreads']
     test_utils_args += '-DWIN32_TESTS'
     test_utils_files += ['osdep/timer.c',
                          'osdep/timer-win2.c',
-                         'osdep/win32/pthread.c',
+                         'osdep/win32/win32_internal_pthreads.c',
                          'osdep/windows_utils.c']
 endif
 

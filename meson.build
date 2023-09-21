@@ -351,7 +351,6 @@ endif
 # This currently works because these are the last flags set
 # in the build for windows. Adding any new flags after this
 # will probably break something.
-includedir = []
 win32_pthreads = get_option('win32-internal-pthreads').require(
     win32 and not posix,
     error_message: 'the os is not win32!',
@@ -362,8 +361,7 @@ if features['win32-internal-pthreads']
     # Note: Adding this include causes POSIX_TIMERS to be defined for
     # unclear reasons (some confusion with <pthread.h> probably).
     # Hack around it by using HAVE_WIN32_INTERNAL_PTHREADS.
-    includedir += include_directories('osdep/win32/include')
-    sources += files('osdep/win32/pthread.c')
+    sources += files('osdep/win32/win32_internal_pthreads.c')
 endif
 
 pthread_debug = get_option('pthread-debug').require(
@@ -1724,8 +1722,8 @@ client_api_version = major + '.' + minor + '.0'
 
 libmpv = library('mpv', sources, dependencies: dependencies, gnu_symbol_visibility: 'hidden',
                  link_args: cc.get_supported_link_arguments(['-Wl,-Bsymbolic']),
-                 version: client_api_version, include_directories: includedir,
-                 install: get_option('libmpv'), build_by_default: get_option('libmpv'))
+                 version: client_api_version, install: get_option('libmpv'),
+                 build_by_default: get_option('libmpv'))
 
 
 if get_option('libmpv')
@@ -1767,7 +1765,7 @@ if get_option('cplayer')
     install_data('etc/mpv-symbolic.svg', install_dir: join_paths(hicolor_dir, 'symbolic', 'apps'))
 
     mpv = executable('mpv', objects: libmpv.extract_all_objects(recursive: true), dependencies: dependencies,
-                     win_subsystem: 'windows,6.0', include_directories: includedir, install: true)
+                     win_subsystem: 'windows,6.0', install: true)
 endif
 
 if get_option('tests')

@@ -28,6 +28,10 @@
 #include <pthread_np.h>
 #endif
 
+#if HAVE_WIN32_INTERNAL_PTHREADS
+#include "osdep/win32/win32_internal_pthreads.h"
+#endif
+
 int mpthread_mutex_init_recursive(pthread_mutex_t *mutex)
 {
     pthread_mutexattr_t attr;
