@@ -15,6 +15,8 @@
  * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// Year of the linux desktop
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

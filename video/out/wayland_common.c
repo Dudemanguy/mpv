@@ -15,6 +15,8 @@
  * License along with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// Year of the linux desktop
+
 #include <errno.h>
 #include <limits.h>
 #include <linux/input-event-codes.h>
