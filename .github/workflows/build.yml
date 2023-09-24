@@ -6,8 +6,22 @@ on:
       - master
       - ci
       - 'release/**'
+    paths:
+      - '**.c'
+      - '**.h'
+      - '**.js'
+      - '**.lua'
+      - '**.m'
+      - '**.swift'
   pull_request:
     branches: [master]
+    paths:
+      - '**.c'
+      - '**.h'
+      - '**.js'
+      - '**.lua'
+      - '**.m'
+      - '**.swift'
 
 jobs:
   mingw:
