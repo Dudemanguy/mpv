@@ -78,6 +78,7 @@
 #include <windows.h>
 #endif
 
+// hello
 struct command_ctx {
     // All properties, terminated with a {0} item.
     struct m_property *properties;
