@@ -6,8 +6,16 @@ on:
       - master
       - ci
       - 'release/**'
+    paths-ignore:
+      - 'DOCS/**'
+      - 'etc/**'
+      - 'TOOLS/lua/**'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - 'DOCS/**'
+      - 'etc/**'
+      - 'TOOLS/lua/**'
 
 jobs:
   mingw:
