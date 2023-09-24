@@ -62,6 +62,8 @@ Available video output drivers are:
 
     https://github.com/mpv-player/mpv/wiki/GPU-Next-vs-GPU
 
+    ``gpu`` will be deleted soon™
+
 ``xv`` (X11 only)
     Uses the XVideo extension to enable hardware-accelerated display. This is
     the most compatible VO on X, but may be low-quality, and has issues with
