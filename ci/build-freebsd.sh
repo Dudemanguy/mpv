@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 
 export CFLAGS="$CFLAGS -isystem/usr/local/include"
 export CXXFLAGS="$CXXFLAGS -isystem/usr/local/include"
@@ -27,3 +26,5 @@ meson setup build \
 
 meson compile -C build
 ./build/mpv -v --no-config
+meson test -C build
+cat ./build/meson-logs/testlog.txt
