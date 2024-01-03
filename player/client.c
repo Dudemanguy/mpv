@@ -1789,6 +1789,7 @@ static bool gen_property_change_event(struct mpv_handle *ctx)
         return false;
 
     while (1) {
+        mp_sleep_ns(MP_TIME_S_TO_NS(0.2));
         if (ctx->cur_property_index >= ctx->num_properties) {
             ctx->new_property_events &= ctx->num_properties > 0;
             if (!ctx->new_property_events)
@@ -1821,6 +1822,7 @@ static bool gen_property_change_event(struct mpv_handle *ctx)
                 .reply_userdata = prop->reply_id,
                 .data = &ctx->cur_property_event,
             };
+            printf("%s, %d, %d\n\n", prop->name, prop->format, prop->value_valid);
             return true;
         }
     }
