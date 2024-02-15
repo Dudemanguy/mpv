@@ -123,7 +123,7 @@ struct track {
     bool image;
     bool attached_picture;
     char *lang;
-
+////
     // If this track is from an external file (e.g. subtitle file).
     bool is_external;
     bool no_default;            // pretend it's not external for auto-selection
