@@ -60,7 +60,7 @@ void reset_subtitle_state(struct MPContext *mpctx)
         reset_subtitles(mpctx, mpctx->tracks[n]);
     term_osd_set_subs(mpctx, NULL);
 }
-
+/////////
 void uninit_sub(struct MPContext *mpctx, struct track *track)
 {
     if (track && track->d_sub) {
