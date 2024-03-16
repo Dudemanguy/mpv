@@ -277,6 +277,7 @@ jobs:
                 libcaca \
                 libcdio-paranoia \
                 libdvdnav \
+                libglvnd \
                 libiconv \
                 libv4l \
                 libxkbcommon \
