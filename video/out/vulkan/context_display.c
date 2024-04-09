@@ -288,12 +288,66 @@ struct priv {
     uint32_t width;
     uint32_t height;
 
+    bool active;
+    bool vt_switcher_active;
+    int primary_fd;
+
 #if HAVE_DRM
     struct mpv_opengl_drm_params_v2 drm_params;
+    struct vt_switcher vt_switcher;
 #endif
 };
 
 #if HAVE_DRM
+static void drop_master(struct ra_ctx *ctx)
+{
+    struct priv *p = ctx->priv;
+    if (!p->active)
+        return;
+    p->active = false;
+    MP_VERBOSE(ctx, "Releasing VT\n");
+    if (drmDropMaster(p->primary_fd)) {
+        MP_WARN(ctx, "Failed to drop DRM master: %s\n",
+                mp_strerror(errno));
+    }
+}
+
+static void set_master(struct ra_ctx *ctx)
+{
+    struct priv *p = ctx->priv;
+    if (p->active)
+        return;
+    p->active = true;
+    MP_VERBOSE(ctx, "Acquiring VT\n");
+    if (drmSetMaster(p->primary_fd)) {
+        MP_WARN(ctx, "Failed to acquire DRM master: %s\n",
+                mp_strerror(errno));
+    }
+}
+
+static void acquire_vt(void *data)
+{
+    struct ra_ctx *ctx = data;
+    set_master(ctx);
+}
+
+static void release_vt(void *data)
+{
+    struct ra_ctx *ctx = data;
+    drop_master(ctx);
+}
+
+static void open_primary_fd(struct ra_ctx *ctx, const char *card_path)
+{
+    struct priv *p = ctx->priv;
+    p->primary_fd = open(card_path, O_RDWR | O_CLOEXEC);
+    if (p->primary_fd == -1) {
+        MP_WARN(ctx, "Failed to open primary node: %s\n",
+                mp_strerror(errno));
+    }
+}
+
+
 static void open_render_fd(struct ra_ctx *ctx, const char *render_path)
 {
     struct priv *p = ctx->priv;
@@ -332,6 +386,7 @@ static bool drm_setup(struct ra_ctx *ctx, int display_idx,
             continue;
         }
 
+        open_primary_fd(ctx, dev->nodes[DRM_NODE_PRIMARY]);
         open_render_fd(ctx, dev->nodes[DRM_NODE_RENDER]);
 
         break;
@@ -339,12 +394,21 @@ static bool drm_setup(struct ra_ctx *ctx, int display_idx,
     drmFreeDevices(devs, MP_ARRAY_SIZE(devs));
 
     struct priv *p = ctx->priv;
+    if (p->primary_fd == -1)
+        MP_WARN(ctx, "Couldn't open DRM primary node.\n");
+
+
     if (p->drm_params.render_fd == -1) {
         MP_WARN(ctx, "Couldn't open DRM render node for Vulkan device "
                      "at: %04X:%02X:%02X:%02X\n",
                      pci_props->pciDomain, pci_props->pciBus,
                      pci_props->pciDevice, pci_props->pciFunction);
         return false;
+    }
+
+    if (drmSetMaster(p->primary_fd)) {
+        MP_WARN(ctx, "Failed to acquire DRM master: %s\n",
+                mp_strerror(errno));
     }
 
     return true;
@@ -363,6 +427,15 @@ static void display_uninit(struct ra_ctx *ctx)
         close(p->drm_params.render_fd);
         p->drm_params.render_fd = -1;
     }
+
+    if (p->primary_fd != -1) {
+        drop_master(ctx);
+        close(p->primary_fd);
+        p->primary_fd = -1;
+    }
+
+    if (p->vt_switcher_active)
+        vt_switcher_destroy(&p->vt_switcher);
 #endif
 }
 
@@ -397,18 +470,27 @@ static bool display_init(struct ra_ctx *ctx)
     }
 
 #if HAVE_DRM
-        VkPhysicalDevicePCIBusInfoPropertiesEXT pci_props = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT,
-        };
-        VkPhysicalDeviceProperties2KHR props = {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
-            .pNext = &pci_props,
-        };
-        vkGetPhysicalDeviceProperties2(device, &props);
+    VkPhysicalDevicePCIBusInfoPropertiesEXT pci_props = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT,
+    };
+    VkPhysicalDeviceProperties2KHR props = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
+        .pNext = &pci_props,
+    };
+    vkGetPhysicalDeviceProperties2(device, &props);
 
-        if (!drm_setup(ctx, display_idx, &pci_props))
-            MP_WARN(ctx, "Failed to set up DRM.\n");
+    if (!drm_setup(ctx, display_idx, &pci_props))
+        MP_WARN(ctx, "Failed to set up DRM.\n");
+
+    p->vt_switcher_active = vt_switcher_init(&p->vt_switcher, ctx->log);
+    if (p->vt_switcher_active) {
+        vt_switcher_acquire(&p->vt_switcher, acquire_vt, ctx);
+        vt_switcher_release(&p->vt_switcher, release_vt, ctx);
+    }
 #endif
+
+    if (!p->vt_switcher_active)
+        MP_WARN(ctx, "Failed to set up VT switcher. Terminal switching will be unavailable.\n");
 
     struct mode_selector selector = {
         .display_idx = display_idx,
@@ -474,12 +556,33 @@ static int display_control(struct ra_ctx *ctx, int *events, int request, void *a
     return VO_NOTIMPL;
 }
 
+static void display_wakeup(struct ra_ctx *ctx)
+{
+    struct priv *p = ctx->priv;
+    if (p->vt_switcher_active)
+        vt_switcher_interrupt_poll(&p->vt_switcher);
+}
+
+static void display_wait_events(struct ra_ctx *ctx, int64_t until_time_ns)
+{
+    struct priv *p = ctx->priv;
+    if (p->vt_switcher_active) {
+        int64_t wait_ns = until_time_ns - mp_time_ns();
+        int64_t timeout_ns = MPCLAMP(wait_ns, 0, MP_TIME_S_TO_NS(10));
+        vt_switcher_poll(&p->vt_switcher, timeout_ns);
+    } else {
+        vo_wait_default(ctx->vo, until_time_ns);
+    }
+}
+
 const struct ra_ctx_fns ra_ctx_vulkan_display = {
     .type           = "vulkan",
     .name           = "displayvk",
     .description    = "VK_KHR_display",
     .reconfig       = display_reconfig,
     .control        = display_control,
+    .wakeup         = display_wakeup,
+    .wait_events    = display_wait_events,
     .init           = display_init,
     .uninit         = display_uninit,
 };

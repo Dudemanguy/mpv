@@ -108,4 +108,11 @@ void vo_drm_wakeup(struct vo *vo);
 bool vo_drm_acquire_crtc(struct vo_drm_state *drm);
 void vo_drm_release_crtc(struct vo_drm_state *drm);
 
+bool vt_switcher_init(struct vt_switcher *s, struct mp_log *log);
+void vt_switcher_acquire(struct vt_switcher *s, void (*handler)(void*), void *user_data);
+void vt_switcher_release(struct vt_switcher *s, void (*handler)(void*), void *user_data);
+void vt_switcher_interrupt_poll(struct vt_switcher *s);
+void vt_switcher_poll(struct vt_switcher *s, int timeout_ns);
+void vt_switcher_destroy(struct vt_switcher *s);
+
 #endif

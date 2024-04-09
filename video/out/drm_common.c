@@ -187,21 +187,21 @@ static void acquire_vt(void *data)
     vo_drm_acquire_crtc(drm);
 }
 
-static void vt_switcher_acquire(struct vt_switcher *s,
+void vt_switcher_acquire(struct vt_switcher *s,
                          void (*handler)(void*), void *user_data)
 {
     s->handlers[HANDLER_ACQUIRE] = handler;
     s->handler_data[HANDLER_ACQUIRE] = user_data;
 }
 
-static void vt_switcher_release(struct vt_switcher *s,
+void vt_switcher_release(struct vt_switcher *s,
                          void (*handler)(void*), void *user_data)
 {
     s->handlers[HANDLER_RELEASE] = handler;
     s->handler_data[HANDLER_RELEASE] = user_data;
 }
 
-static bool vt_switcher_init(struct vt_switcher *s, struct mp_log *log)
+bool vt_switcher_init(struct vt_switcher *s, struct mp_log *log)
 {
     s->tty_fd = -1;
     s->log = log;
@@ -265,13 +265,13 @@ static bool vt_switcher_init(struct vt_switcher *s, struct mp_log *log)
     return true;
 }
 
-static void vt_switcher_interrupt_poll(struct vt_switcher *s)
+void vt_switcher_interrupt_poll(struct vt_switcher *s)
 {
     unsigned char event = EVT_INTERRUPT;
     (void)write(vt_switcher_pipe[1], &event, sizeof(event));
 }
 
-static void vt_switcher_destroy(struct vt_switcher *s)
+void vt_switcher_destroy(struct vt_switcher *s)
 {
     struct vt_mode vt_mode = {0};
     vt_mode.mode = VT_AUTO;
@@ -287,7 +287,7 @@ static void vt_switcher_destroy(struct vt_switcher *s)
     close(vt_switcher_pipe[1]);
 }
 
-static void vt_switcher_poll(struct vt_switcher *s, int timeout_ns)
+void vt_switcher_poll(struct vt_switcher *s, int timeout_ns)
 {
     struct pollfd fds[1] = {
         { .events = POLLIN, .fd = vt_switcher_pipe[0] },
@@ -980,6 +980,7 @@ bool vo_drm_init(struct vo *vo)
     }
 
     drm->fd = open_card_path(drm->card_path);
+    printf("%s\n", drm->card_path);
     if (drm->fd < 0) {
         MP_ERR(drm, "Cannot open card \"%d\": %s.\n", drm->card_no, mp_strerror(errno));
         goto err;
