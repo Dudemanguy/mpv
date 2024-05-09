@@ -23,12 +23,8 @@
 
 #include <cdio/cdio.h>
 
-// For cdio_cddap_version
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-prototypes"
 #include <cdio/paranoia/cdda.h>
 #include <cdio/paranoia/paranoia.h>
-#pragma GCC diagnostic pop
 
 #include "common/msg.h"
 #include "config.h"
