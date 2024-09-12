@@ -23,6 +23,8 @@ struct priv {
     int last_hw_output_fmt;
     int last_hw_input_fmt;
 
+    struct mp_hwdec_ctx *ctx;
+
     // Hardware wrapper format, e.g. IMGFMT_VAAPI.
     int hw_imgfmt;
 
@@ -137,6 +139,29 @@ static bool select_format(struct priv *p, int input_fmt,
                                             input_fmt);
     if (!hw_output_fmt)
         return false;
+
+    // Finally, we must ensure that the hwupload format conversion is actually
+    // usable by the hwdec in question. If not, then we force a conversion in
+    // the CPU by setting the hw_input_fmt to the hw_output_fmt.
+    if (p->ctx->supported_hw_uploads) {
+        bool supported = false;
+        struct mp_hw_uploads *hw_uploads = p->ctx->supported_hw_uploads;
+        int num_hw_uploads = p->ctx->num_supported_hw_uploads;
+        int i = 0;
+        while (!supported && i < num_hw_uploads) {
+            if (hw_uploads->input_fmt == hw_input_fmt) {
+                for (int j = 0; hw_uploads->supported_uploads[j]; j++) {
+                    if (hw_uploads->supported_uploads[j] == hw_output_fmt) {
+                        supported = true;
+                        break;
+                    }
+                }
+            }
+            ++i;
+        }
+        if (!supported)
+            hw_input_fmt = hw_output_fmt;
+    }
 
     *out_hw_input_fmt = hw_input_fmt;
     *out_hw_output_fmt = hw_output_fmt;
@@ -365,6 +390,7 @@ static bool probe_formats(struct mp_filter *f, int hw_imgfmt, bool use_conversio
         MP_INFO(f, "no support for this hw format\n");
         return false;
     }
+    p->ctx = ctx;
 
     // Probe for supported formats. This is very roundabout, because the
     // hwcontext API does not give us this information directly. We resort to
@@ -568,7 +594,6 @@ struct mp_hwupload mp_hwupload_create(struct mp_filter *parent, int hw_imgfmt,
                mp_imgfmt_to_name(sw_imgfmt));
         goto fail;
     }
-
     if (src_is_same_hw) {
         if (p->conversion_filter_name) {
             /*
