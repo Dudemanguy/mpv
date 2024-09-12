@@ -8,6 +8,11 @@
 
 struct mp_image_pool;
 
+struct mp_hw_uploads {
+    int input_fmt;
+    int *supported_uploads;
+};
+
 struct mp_hwdec_ctx {
     const char *driver_name; // NULL if unknown/not loaded
 
@@ -19,6 +24,12 @@ struct mp_hwdec_ctx {
     const int *supported_formats;
     // HW format used by the hwdec
     int hw_imgfmt;
+
+    // List of supported software formats and working hwuploads to
+    // other software formats in hardware.
+    // If NULL, all possible hwuploads are assumed to be supported.
+    struct mp_hw_uploads *supported_hw_uploads;
+    int num_supported_hw_uploads;
 
     // The name of this hwdec's matching conversion filter if available.
     // This will be used for hardware conversion of frame formats.
