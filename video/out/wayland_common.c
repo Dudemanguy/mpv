@@ -1403,6 +1403,20 @@ static void tranche_formats(void *data,
                             struct zwp_linux_dmabuf_feedback_v1 *zwp_linux_dmabuf_feedback_v1,
                             struct wl_array *indices)
 {
+    struct vo_wayland_state *wl = data;
+
+    assert(wl->compositor_format_map);
+    const compositor_format *formats = wl->compositor_format_map;
+
+    uint16_t *index;
+    wl_array_for_each(index, indices) {
+        struct drm_format *drm_format = talloc_zero(wl, struct drm_format);
+        drm_format->format = formats[*index].format;
+        drm_format->modifier = formats[*index].modifier;
+        MP_TARRAY_APPEND(wl, wl->compositor_formats, wl->num_compositor_formats, drm_format);
+        MP_DBG(wl, "Compositor supports drm format: '%s(%016" PRIx64 ")'\n",
+               mp_tag_str(drm_format->format), drm_format->modifier);
+    }
 }
 
 static void tranche_flags(void *data,
