@@ -444,8 +444,12 @@ static void try_format_upload(struct ra_hwdec *hw, enum AVPixelFormat pixfmt)
         VAStatus status = vaExportSurfaceHandle(display, id, VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2,
                                                 VA_EXPORT_SURFACE_COMPOSED_LAYERS | VA_EXPORT_SURFACE_READ_ONLY, &desc);
 
-        if (status == VA_STATUS_SUCCESS)
+        if (status == VA_STATUS_SUCCESS) {
+            MP_DBG(hw, "Success for input fmt: %s, output fmt: %s\n", mp_imgfmt_to_name(mp_fmt), mp_imgfmt_to_name(p->formats[n]));
             MP_TARRAY_APPEND(p, hw_uploads.supported_uploads, num_formats, p->formats[n]);
+        } else {
+            MP_DBG(hw, "Failure for input fmt: %s, output fmt: %s\n", mp_imgfmt_to_name(mp_fmt), mp_imgfmt_to_name(p->formats[n]));
+        }
         close_file_descriptors(&desc);
         mp_image_unrefp(&dst);
     }
