@@ -397,7 +397,7 @@ struct frame_priv {
     struct ra_hwdec *hwdec;
 };
 
-static int plane_data_from_imgfmt(struct pl_plane_data out_data[4],
+static int plane_data_from_imgfmt(struct vo *vo, struct pl_plane_data out_data[4],
                                   struct pl_bit_encoding *out_bits,
                                   enum mp_imgfmt imgfmt)
 {
@@ -476,12 +476,14 @@ static int plane_data_from_imgfmt(struct pl_plane_data out_data[4],
                     out_bits = NULL;
                 }
             }
+            MP_DBG(vo, "Name: %s, Component size: %d, Number of components: %d\n", mp_imgfmt_to_name(imgfmt), data->component_size[c], num_comps);
         }
 
         data->pixel_stride = desc.bpp[p] / 8;
         data->type = (desc.flags & MP_IMGFLAG_TYPE_FLOAT)
                             ? PL_FMT_FLOAT
                             : PL_FMT_UNORM;
+
     }
 
     if (any_padded && !out_bits)
@@ -668,7 +670,7 @@ static bool map_frame(pl_gpu gpu, pl_tex *tex, const struct pl_source_frame *src
     } else { // swdec
 
         struct pl_plane_data data[4] = {0};
-        frame->num_planes = plane_data_from_imgfmt(data, &frame->repr.bits, mpi->imgfmt);
+        frame->num_planes = plane_data_from_imgfmt(vo, data, &frame->repr.bits, mpi->imgfmt);
         for (int n = 0; n < frame->num_planes; n++) {
             struct pl_plane *plane = &frame->planes[n];
             data[n].width = mp_image_plane_w(mpi, n);
@@ -1190,7 +1192,7 @@ static int query_format(struct vo *vo, int format)
 
     struct pl_bit_encoding bits;
     struct pl_plane_data data[4] = {0};
-    int planes = plane_data_from_imgfmt(data, &bits, format);
+    int planes = plane_data_from_imgfmt(vo, data, &bits, format);
     if (!planes)
         return false;
 

@@ -1,5 +1,6 @@
 #include "common/common.h"
 #include "common/msg.h"
+#include "video/fmt-conversion.h"
 #include "video/img_format.h"
 
 #include "ra.h"
@@ -200,11 +201,14 @@ const struct ra_format *ra_find_unorm_format(struct ra *ra,
 {
     for (int n = 0; n < ra->num_formats; n++) {
         const struct ra_format *fmt = ra->formats[n];
+        MP_DBG(ra, "name: %s, bytes per component: %d, number of components: %d\n", fmt->name, bytes_per_component, n_components);
         if (fmt->ctype == RA_CTYPE_UNORM && fmt->num_components == n_components &&
             fmt->pixel_size == bytes_per_component * n_components &&
             fmt->component_depth[0] == bytes_per_component * 8 &&
-            fmt->linear_filter && ra_format_is_regular(fmt))
+            fmt->linear_filter && ra_format_is_regular(fmt)) {
+            MP_DBG(ra, "ra fmt, %s, found.\n", fmt->name);
             return fmt;
+        }
     }
     return NULL;
 }
@@ -302,6 +306,8 @@ bool ra_get_imgfmt_desc(struct ra *ra, int imgfmt, struct ra_imgfmt_desc *out)
         res.component_pad = regfmt.component_pad;
         for (int n = 0; n < regfmt.num_planes; n++) {
             struct mp_regular_imgfmt_plane *plane = &regfmt.planes[n];
+            MP_DBG(ra, "Name: %s, Component size: %d, Number of components: %d, Component type: %d\n",
+                   mp_imgfmt_to_name(imgfmt), regfmt.component_size, plane->num_components, regfmt.component_type);
             res.planes[n] = find_plane_format(ra, regfmt.component_size,
                                               plane->num_components,
                                               regfmt.component_type);
