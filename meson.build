@@ -689,6 +689,12 @@ if librt.found()
     dependencies += librt
 endif
 
+libseat = dependency('libseat', required: false)
+features += {'libseat': libseat.found()}
+if features['libseat']
+    dependencies += libseat
+endif
+
 lua = dependency('', required: false)
 lua_opt = get_option('lua')
 if lua_opt != 'disabled'

@@ -30,6 +30,10 @@
 #include "video/out/drm_common.h"
 #endif
 
+#if HAVE_LIBSEAT
+#include <libseat.h>
+#endif
+
 struct vulkan_display_opts {
     int display;
     int mode;
@@ -287,27 +291,64 @@ struct priv {
     struct vulkan_display_opts *opts;
     uint32_t width;
     uint32_t height;
+    char *render_path;
 
 #if HAVE_DRM
     struct mpv_opengl_drm_params_v2 drm_params;
 #endif
+#if HAVE_LIBSEAT
+    struct libseat *seat;
+#endif
 };
 
+#if HAVE_LIBSEAT
+static void enable_seat(struct libseat *seat, void *data)
+{
+    struct ra_ctx *ctx = data;
+    struct priv *p = ctx->priv;
+    if (libseat_open_device(p->seat, p->render_path, &p->drm_params.render_fd) == -1)
+        MP_WARN(ctx, "Unable to open device %s: %s\n", p->render_path, mp_strerror(errno));
+}
+
+static void disable_seat(struct libseat *seat, void *data)
+{
+    struct ra_ctx *ctx = data;
+    struct priv *p = ctx->priv;
+    if (libseat_disable_seat(p->seat) == -1)
+        MP_WARN(ctx, "Unable to close device %s: %s\n", p->render_path, mp_strerror(errno));
+}
+
+static const struct libseat_seat_listener seat_listener = {
+    enable_seat,
+    disable_seat,
+};
+#endif
+
 #if HAVE_DRM
-static void open_render_fd(struct ra_ctx *ctx, const char *render_path)
+static void open_render_fd(struct ra_ctx *ctx)
 {
     struct priv *p = ctx->priv;
     p->drm_params.fd = -1;
-    p->drm_params.render_fd = open(render_path, O_RDWR | O_CLOEXEC);
+#if HAVE_LIBSEAT
+    p->seat = libseat_open_seat(&seat_listener, ctx);
+    if (!p->seat) {
+        MP_WARN(ctx, "Failed to open seat: %s\n", mp_strerror(errno));
+        return;
+    }
+    enable_seat(p->seat, ctx);
+#else
+    p->drm_params.render_fd = open(p->render_path, O_RDWR | O_CLOEXEC);
     if (p->drm_params.render_fd == -1) {
         MP_WARN(ctx, "Failed to open render node: %s\n",
                 mp_strerror(errno));
     }
+#endif
 }
 
 static bool drm_setup(struct ra_ctx *ctx, int display_idx,
                       VkPhysicalDevicePCIBusInfoPropertiesEXT *pci_props)
 {
+    struct priv *p = ctx->priv;
     drmDevice *devs[32] = {};
     int count = drmGetDevices2(0, devs, MP_ARRAY_SIZE(devs));
     for (int i = 0; i < count; i++) {
@@ -332,13 +373,13 @@ static bool drm_setup(struct ra_ctx *ctx, int display_idx,
             continue;
         }
 
-        open_render_fd(ctx, dev->nodes[DRM_NODE_RENDER]);
+        p->render_path = talloc_strdup(ctx, dev->nodes[DRM_NODE_RENDER]);
+        open_render_fd(ctx);
 
         break;
     }
     drmFreeDevices(devs, MP_ARRAY_SIZE(devs));
 
-    struct priv *p = ctx->priv;
     if (p->drm_params.render_fd == -1) {
         MP_WARN(ctx, "Couldn't open DRM render node for Vulkan device "
                      "at: %04X:%02X:%02X:%02X\n",
@@ -359,10 +400,21 @@ static void display_uninit(struct ra_ctx *ctx)
     mpvk_uninit(&p->vk);
 
 #if HAVE_DRM
+#if HAVE_LIBSEAT
+    if (p->seat) {
+        if (p->drm_params.render_fd != -1)
+            disable_seat(p->seat, ctx);
+        if (libseat_close_seat(p->seat) == -1) {
+            MP_WARN(ctx, "Unable to close seat: %s\n",
+                    mp_strerror(errno));
+        }
+    }
+#else
     if (p->drm_params.render_fd != -1) {
         close(p->drm_params.render_fd);
         p->drm_params.render_fd = -1;
     }
+#endif
 #endif
 }
 
