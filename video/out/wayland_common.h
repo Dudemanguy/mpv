@@ -136,6 +136,9 @@ struct vo_wayland_state {
     bool present_clock;
     bool use_present;
 
+    /* shm */
+    uint32_t shm_map[IMGFMT_END - IMGFMT_START];
+
     /* single-pixel-buffer */
     struct wp_single_pixel_buffer_manager_v1 *single_pixel_manager;
 

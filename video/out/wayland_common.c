@@ -239,6 +239,7 @@ static void get_shape_device(struct vo_wayland_state *wl, struct vo_wayland_seat
 static void guess_focus(struct vo_wayland_state *wl);
 static void handle_key_input(struct vo_wayland_seat *s, uint32_t key, uint32_t state, bool no_emit);
 static void initialize_color_maps(struct vo_wayland_state *wl);
+static void initialize_shm_maps(struct vo_wayland_state *wl);
 static void prepare_resize(struct vo_wayland_state *wl);
 static void remove_feedback(struct vo_wayland_feedback_pool *fback_pool,
                             struct wp_presentation_feedback *fback);
@@ -925,6 +926,47 @@ static const struct wl_output_listener output_listener = {
     output_handle_scale,
     output_handle_name,
     output_handle_description,
+};
+
+static void supported_shm_format(void *data, struct wl_shm *wl_shm, uint32_t format)
+{
+    struct vo_wayland_state *wl = data;
+    switch (format) {
+    case WL_SHM_FORMAT_ARGB8888:
+        wl->shm_map[IMGFMT_ARGB - IMGFMT_START] = WL_SHM_FORMAT_ARGB8888;
+        wl->shm_map[IMGFMT_BGRA - IMGFMT_START] = WL_SHM_FORMAT_ARGB8888;
+        break;
+    case WL_SHM_FORMAT_XRGB8888:
+        wl->shm_map[IMGFMT_0RGB - IMGFMT_START] = WL_SHM_FORMAT_XRGB8888;
+        wl->shm_map[IMGFMT_BGR0 - IMGFMT_START] = WL_SHM_FORMAT_XRGB8888;
+        break;
+    case WL_SHM_FORMAT_RGBA8888:
+        wl->shm_map[IMGFMT_RGBA - IMGFMT_START] = WL_SHM_FORMAT_RGBA8888;
+        break;
+    case WL_SHM_FORMAT_XRGB2101010:
+        wl->shm_map[IMGFMT_RGB30 - IMGFMT_START] = WL_SHM_FORMAT_XRGB2101010;
+        break;
+    case WL_SHM_FORMAT_UYVY:
+        wl->shm_map[IMGFMT_UYVY - IMGFMT_START] = WL_SHM_FORMAT_UYVY;
+        break;
+    case WL_SHM_FORMAT_NV12:
+        wl->shm_map[IMGFMT_NV12 - IMGFMT_START] = WL_SHM_FORMAT_NV12;
+        break;
+    case WL_SHM_FORMAT_YUV420:
+        wl->shm_map[IMGFMT_420P - IMGFMT_START] = WL_SHM_FORMAT_YUV420;
+        break;
+    case WL_SHM_FORMAT_YUV444:
+        wl->shm_map[IMGFMT_444P - IMGFMT_START] = WL_SHM_FORMAT_YUV444;
+        break;
+    case WL_SHM_FORMAT_P010:
+        wl->shm_map[IMGFMT_P010 - IMGFMT_START] = WL_SHM_FORMAT_P010;
+        break;
+    }
+    MP_DBG(wl, "Compositor supports shm format: %s\n", mp_tag_str(format));
+}
+
+static const struct wl_shm_listener shm_listener = {
+    supported_shm_format,
 };
 
 static void surface_handle_enter(void *data, struct wl_surface *wl_surface,
@@ -1707,7 +1749,9 @@ static void registry_handle_add(void *data, struct wl_registry *reg, uint32_t id
 
     if (!strcmp(interface, wl_shm_interface.name) && found++) {
         ver = 1;
+        initialize_shm_maps(wl);
         wl->shm = wl_registry_bind(reg, id, &wl_shm_interface, ver);
+        wl_shm_add_listener(wl->shm, &shm_listener, wl);
     }
 
     if (!strcmp(interface, wp_content_type_manager_v1_interface.name) && found++) {
@@ -2305,6 +2349,13 @@ static void initialize_color_maps(struct vo_wayland_state *wl)
         wl->primaries_map[i] = -1;
     for (int i = 0; i < PL_COLOR_TRC_COUNT; i++)
         wl->transfer_map[i] = -1;
+}
+
+static void initialize_shm_maps(struct vo_wayland_state *wl)
+{
+    // -1 indicates unsupported
+    for (int i = 0; i < IMGFMT_END - IMGFMT_START; i++)
+        wl->shm_map[i] = -1;
 }
 
 static void prepare_resize(struct vo_wayland_state *wl)

@@ -30,8 +30,6 @@
 #include "vo.h"
 #include "wayland_common.h"
 
-#define IMGFMT_WL_RGB MP_SELECT_LE_BE(IMGFMT_BGR0, IMGFMT_0RGB)
-
 struct buffer {
     struct vo *vo;
     size_t size;
@@ -47,6 +45,7 @@ struct priv {
     struct mp_rect src;
     struct mp_rect dst;
     struct mp_osd_res osd;
+    int format;
 };
 
 static void buffer_handle_release(void *data, struct wl_buffer *wl_buffer)
@@ -106,7 +105,7 @@ static struct buffer *buffer_create(struct vo *vo, int width, int height)
     if (!buf->pool)
         goto error3;
     buf->buffer = wl_shm_pool_create_buffer(buf->pool, 0, width, height,
-                                            stride, WL_SHM_FORMAT_XRGB8888);
+                                            stride, wl->shm_map[p->format - IMGFMT_START]);
     if (!buf->buffer)
         goto error4;
     wl_buffer_add_listener(buf->buffer, &buffer_listener, buf);
@@ -162,10 +161,27 @@ err:
     return -1;
 }
 
+static bool check_endian(int format)
+{
+    int input = format;
+    int output;
+
+    // Special case the two guaranteed formats
+    if (input == IMGFMT_BGRA || input == IMGFMT_ARGB) {
+        output = MP_SELECT_LE_BE(IMGFMT_BGRA, IMGFMT_ARGB);
+    } else if (input == IMGFMT_BGR0 || input == IMGFMT_0RGB) {
+        output = MP_SELECT_LE_BE(IMGFMT_BGR0, IMGFMT_0RGB);
+    } else {
+        output = input;
+    }
+
+    return output == input;
+}
+
 static int query_format(struct vo *vo, int format)
 {
-    struct priv *p = vo->priv;
-    return mp_sws_supports_formats(p->sws, IMGFMT_WL_RGB, format) ? 1 : 0;
+    struct vo_wayland_state *wl = vo->wl;
+    return check_endian(format) && wl->shm_map[format - IMGFMT_START] != -1;
 }
 
 static int reconfig(struct vo *vo, struct mp_image_params *params)
@@ -175,6 +191,7 @@ static int reconfig(struct vo *vo, struct mp_image_params *params)
     if (!vo_wayland_reconfig(vo))
         return -1;
     p->sws->src = *params;
+    p->format = params->imgfmt;
 
     return 0;
 }
@@ -198,7 +215,7 @@ static int resize(struct vo *vo)
     vo_get_src_dst_rects(vo, &p->src, &p->dst, &p->osd);
 
     p->sws->dst = (struct mp_image_params) {
-        .imgfmt = IMGFMT_WL_RGB,
+        .imgfmt = p->format,
         .w = width,
         .h = height,
         .p_w = 1,
@@ -254,7 +271,7 @@ static void draw_frame(struct vo *vo, struct vo_frame *frame)
     if (buf) {
         p->free_buffers = buf->next;
     } else {
-        buf = buffer_create(vo, vo->dwidth, vo->dheight);
+       buf = buffer_create(vo, vo->dwidth, vo->dheight);
         if (!buf) {
             wl_surface_attach(wl->surface, NULL, 0, 0);
             return;
