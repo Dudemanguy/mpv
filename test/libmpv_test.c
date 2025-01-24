@@ -263,7 +263,7 @@ static void test_options_and_properties(void)
     // Ensure the format is still MPV_FORMAT_FLAG for these property types.
     mpv_node result_node;
     check_api_error(mpv_get_property(ctx, "idle-active", MPV_FORMAT_NODE, &result_node));
-    if (result_node.format != MPV_FORMAT_FLAG)
+    if (result_node.format != MPV_FORMAT_NODE)
         fail("Node: expected mpv format '%d' but got '%d'!\n", MPV_FORMAT_FLAG, result_node.format);
 
     // Always should be true.
