@@ -508,14 +508,17 @@ static void select_and_set_hwdec(struct mp_filter *vd)
         bstr opt = bstr0(hwdec_api[i]);
 
         bool hwdec_requested = !bstr_equals0(opt, "no");
-        bool hwdec_auto_all = bstr_equals0(opt, "auto") ||
-                            bstr_equals0(opt, "");
-        bool hwdec_auto_safe = bstr_equals0(opt, "auto-safe") ||
+        bool hwdec_auto_safe = bstr_equals0(opt, "auto") ||
+                            bstr_equals0(opt, "auto-safe") ||
+                            bstr_equals0(opt, "auto-copy") ||
                             bstr_equals0(opt, "auto-copy-safe") ||
-                            bstr_equals0(opt, "yes");
+                            bstr_equals0(opt, "yes") ||
+                            bstr_equals0(opt, "");
+        bool hwdec_auto_unsafe = bstr_equals0(opt, "auto-unsafe");
         bool hwdec_auto_copy = bstr_equals0(opt, "auto-copy") ||
-                            bstr_equals0(opt, "auto-copy-safe");
-        bool hwdec_auto = hwdec_auto_all || hwdec_auto_copy || hwdec_auto_safe;
+                            bstr_equals0(opt, "auto-copy-safe") ||
+                            bstr_equals0(opt, "auto-copy-unsafe");
+        bool hwdec_auto = hwdec_auto_unsafe || hwdec_auto_copy || hwdec_auto_safe;
 
         if (!hwdec_requested) {
             MP_VERBOSE(vd, "No hardware decoding requested.\n");
